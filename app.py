@@ -73,8 +73,41 @@ class TorScraper:
             return cached_data
         
         print(f"🔄 Yeni veri çekiliyor: {date}")
-        self.change_ip()  # Yeni IP al
-        time.sleep(10)  # Tor bootstrap için bekle
+        
+        # IP değiştirme ve veri çekme döngüsü - VERİ GELENE KADAR
+        attempt = 0
+        while True:
+            attempt += 1
+            print(f"🔄 Deneme {attempt} - Veri gelene kadar devam...")
+            
+            # IP değiştir
+            self.change_ip()
+            time.sleep(10)  # Tor bootstrap için bekle
+            
+            # Veri çekmeyi dene
+            result = self._fetch_sofascore_data(date)
+            
+            # Başarılı ise döndür
+            if result.get('events') or (not result.get('error')):
+                print(f"✅ Veri başarıyla alındı! Deneme: {attempt}")
+                return result
+            
+            # 403 hatası varsa tekrar dene
+            if result.get('error') and ('403' in str(result.get('error')) or 'Forbidden' in str(result.get('error'))):
+                print(f"❌ 403 Forbidden - IP değiştiriliyor... (Deneme: {attempt})")
+                continue
+            
+            # Başka hatalar için de tekrar dene (network, timeout vs.)
+            if result.get('error'):
+                print(f"❌ Hata: {result.get('error')} - IP değiştiriliyor... (Deneme: {attempt})")
+                continue
+            
+            # Beklenmeyen durum
+            print(f"⚠️ Beklenmeyen durum - Tekrar deneniyor... (Deneme: {attempt})")
+            continue
+    
+    def _fetch_sofascore_data(self, date):
+        """SofaScore'dan veri çekme fonksiyonu"""
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
@@ -105,7 +138,7 @@ class TorScraper:
                 # IP bilgisini ekle
                 data['ip_used'] = self.get_current_ip()
                 
-                # MongoDB'ye kaydet
+                # Cache'e kaydet
                 self.save_to_cache(date, data)
                 
                 return data
@@ -114,14 +147,15 @@ class TorScraper:
                     'error': f'HTTP {response.status_code}',
                     'ip_used': self.get_current_ip()
                 }
-                self.save_to_cache(date, error_data)
+                # 403 hatası cache'e kaydetme
+                if response.status_code != 403:
+                    self.save_to_cache(date, error_data)
                 return error_data
         except Exception as e:
             error_data = {
                 'error': str(e),
                 'ip_used': self.get_current_ip()
             }
-            self.save_to_cache(date, error_data)
             return error_data
 
 scraper = TorScraper()

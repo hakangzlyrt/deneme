@@ -20,6 +20,14 @@ interface Match {
     code: number;
     description: string;
   };
+  homeScore?: {
+    current?: number;
+    display?: number;
+  };
+  awayScore?: {
+    current?: number;
+    display?: number;
+  };
 }
 
 interface SofaScoreData {
@@ -64,6 +72,18 @@ export default function Home() {
       case 1: return 'text-blue-500'; // Live
       default: return 'text-gray-500';
     }
+  };
+
+  const getScore = (match: Match) => {
+    const homeScore = match.homeScore?.current ?? match.homeScore?.display ?? 0;
+    const awayScore = match.awayScore?.current ?? match.awayScore?.display ?? 0;
+    
+    // Maç başlamadıysa skor gösterme
+    if (match.status.code === 0) {
+      return null;
+    }
+    
+    return `${homeScore} - ${awayScore}`;
   };
 
   return (
@@ -151,9 +171,15 @@ export default function Home() {
                         </div>
                         
                         <div className="text-center mx-4">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDate(match.startTimestamp)}
-                          </div>
+                          {getScore(match) ? (
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                              {getScore(match)}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDate(match.startTimestamp)}
+                            </div>
+                          )}
                         </div>
                         
                         <div className="text-right">
