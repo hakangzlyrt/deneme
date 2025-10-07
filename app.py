@@ -50,26 +50,18 @@ class TorScraper:
             
             if response.status_code == 200:
                 data = response.json()
-                return {
-                    'success': True,
-                    'data': data,
-                    'ip_used': self.get_current_ip(),
-                    'events_count': len(data.get('events', [])),
-                    'message': 'SofaScore verisi başarıyla alındı'
-                }
+                # Raw JSON'u döndür, sadece IP bilgisini ekle
+                data['ip_used'] = self.get_current_ip()
+                return data
             else:
                 return {
-                    'success': False,
                     'error': f'HTTP {response.status_code}',
-                    'ip_used': self.get_current_ip(),
-                    'message': 'SofaScore verisi alınamadı'
+                    'ip_used': self.get_current_ip()
                 }
         except Exception as e:
             return {
-                'success': False,
                 'error': str(e),
-                'ip_used': self.get_current_ip(),
-                'message': 'Bağlantı hatası'
+                'ip_used': self.get_current_ip()
             }
 
 scraper = TorScraper()
