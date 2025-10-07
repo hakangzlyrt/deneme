@@ -49,3 +49,4 @@ https://your-project.vercel.app/api/sofascore
 - **Hızlı**: Edge lokasyonlarından yakın sunucular
 - **Ücretsiz**: Vercel'in ücretsiz planı
 - **Kolay**: Tek komutla deploy
+# SofaScore Edge Function - Build Fix
