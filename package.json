@@ -1,0 +1,14 @@
+{
+  "name": "sofascore-edge-function",
+  "version": "1.0.0",
+  "description": "SofaScore API için Vercel Edge Function",
+  "main": "api/sofascore.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["sofascore", "api", "edge-function", "vercel"],
+  "author": "",
+  "license": "MIT"
+}
