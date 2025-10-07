@@ -31,49 +31,49 @@ class TorScraper:
         except:
             return False
     
-        def scrape_sofascore(self):
-            self.change_ip()  # Yeni IP al
-            time.sleep(10)  # Tor bootstrap için bekle
+    def scrape_sofascore(self):
+        self.change_ip()  # Yeni IP al
+        time.sleep(10)  # Tor bootstrap için bekle
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Accept-Language': 'tr-TR,tr;q=0.9',
+            'Referer': 'https://www.sofascore.com/tr/',
+            'Origin': 'https://www.sofascore.com',
+            'Cookie': 'locale=tr; lang=tr; country=TR',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        
+        url = 'https://www.sofascore.com/api/v1/sport/football/scheduled-events/2025-10-07?locale=tr'
+        
+        # Session kullan, önce ana sayfayı ziyaret et
+        session = requests.Session()
+        session.proxies.update(self.proxies)
+        
+        try:
+            # Önce ana sayfayı ziyaret et
+            session.get('https://www.sofascore.com/tr/', headers=headers, timeout=30)
+            time.sleep(2)
             
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-                'Accept': '*/*',
-                'Accept-Language': 'tr-TR,tr;q=0.9',
-                'Referer': 'https://www.sofascore.com/tr/',
-                'Origin': 'https://www.sofascore.com',
-                'Cookie': 'locale=tr; lang=tr; country=TR',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            # Sonra API'yi çağır
+            response = session.get(url, headers=headers, timeout=60)
             
-            url = 'https://www.sofascore.com/api/v1/sport/football/scheduled-events/2025-10-07?locale=tr'
-            
-            # Session kullan, önce ana sayfayı ziyaret et
-            session = requests.Session()
-            session.proxies.update(self.proxies)
-            
-            try:
-                # Önce ana sayfayı ziyaret et
-                session.get('https://www.sofascore.com/tr/', headers=headers, timeout=30)
-                time.sleep(2)
-                
-                # Sonra API'yi çağır
-                response = session.get(url, headers=headers, timeout=60)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    # Raw JSON'u döndür, sadece IP bilgisini ekle
-                    data['ip_used'] = self.get_current_ip()
-                    return data
-                else:
-                    return {
-                        'error': f'HTTP {response.status_code}',
-                        'ip_used': self.get_current_ip()
-                    }
-            except Exception as e:
+            if response.status_code == 200:
+                data = response.json()
+                # Raw JSON'u döndür, sadece IP bilgisini ekle
+                data['ip_used'] = self.get_current_ip()
+                return data
+            else:
                 return {
-                    'error': str(e),
+                    'error': f'HTTP {response.status_code}',
                     'ip_used': self.get_current_ip()
                 }
+        except Exception as e:
+            return {
+                'error': str(e),
+                'ip_used': self.get_current_ip()
+            }
 
 scraper = TorScraper()
 
