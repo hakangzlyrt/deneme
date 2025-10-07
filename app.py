@@ -4,8 +4,6 @@ from stem import Signal
 from stem.control import Controller
 import time
 import json
-from pymongo import MongoClient
-from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -15,10 +13,9 @@ class TorScraper:
             'http': 'socks5://127.0.0.1:9050',
             'https': 'socks5://127.0.0.1:9050'
         }
-        # MongoDB bağlantısı
-        self.client = MongoClient('mongodb://localhost:27017/')
-        self.db = self.client['sofascore']
-        self.matches_collection = self.db['matches']
+        # Basit cache sistemi (memory-based)
+        self.cache = {}
+        self.cache_timestamps = {}
     
     def get_current_ip(self):
         try:
@@ -38,45 +35,35 @@ class TorScraper:
             return False
     
     def get_cached_data(self, date):
-        """MongoDB'den cache'lenmiş veriyi kontrol et"""
+        """Memory cache'den veriyi kontrol et"""
         try:
             # 1 dakikadan yeni veri var mı kontrol et
-            one_minute_ago = datetime.now() - timedelta(minutes=1)
+            if date in self.cache:
+                cache_time = self.cache_timestamps[date]
+                if time.time() - cache_time < 60:  # 1 dakika
+                    print(f"✅ Cache'den veri bulundu: {date}")
+                    return self.cache[date]
+                else:
+                    # Eski veriyi sil
+                    del self.cache[date]
+                    del self.cache_timestamps[date]
             
-            cached_data = self.matches_collection.find_one({
-                'date': date,
-                'created_at': {'$gte': one_minute_ago}
-            })
-            
-            if cached_data:
-                print(f"✅ Cache'den veri bulundu: {date}")
-                return cached_data['data']
-            else:
-                print(f"❌ Cache'de veri yok veya eski: {date}")
-                return None
+            print(f"❌ Cache'de veri yok veya eski: {date}")
+            return None
         except Exception as e:
             print(f"❌ Cache kontrol hatası: {e}")
             return None
     
     def save_to_cache(self, date, data):
-        """Veriyi MongoDB'ye kaydet"""
+        """Veriyi memory cache'e kaydet"""
         try:
-            # Eski veriyi sil
-            self.matches_collection.delete_many({'date': date})
-            
-            # Yeni veriyi kaydet
-            document = {
-                'date': date,
-                'data': data,
-                'created_at': datetime.now(),
-                'ip_used': data.get('ip_used', 'Unknown')
-            }
-            
-            result = self.matches_collection.insert_one(document)
-            print(f"✅ Veri MongoDB'ye kaydedildi: {date} - ID: {result.inserted_id}")
+            # Memory cache'e kaydet
+            self.cache[date] = data
+            self.cache_timestamps[date] = time.time()
+            print(f"✅ Veri cache'e kaydedildi: {date}")
             return True
         except Exception as e:
-            print(f"❌ MongoDB kaydetme hatası: {e}")
+            print(f"❌ Cache kaydetme hatası: {e}")
             return False
     
     def scrape_sofascore(self, date='2025-10-07'):

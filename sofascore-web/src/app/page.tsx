@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Match {
   id: number;
@@ -34,11 +34,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async (date: string) => {
+  const fetchData = useCallback(async (date: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/sofascore?date=${date}`);
+      const response = await fetch(`/api/scorelive/matches/${date}`);
       const result = await response.json();
       setData(result);
     } catch (err) {
@@ -47,11 +47,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData(selectedDate);
-  }, [selectedDate]);
+  }, [selectedDate, fetchData]); // selectedDate veya fetchData değiştiğinde çalış
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString('tr-TR');
