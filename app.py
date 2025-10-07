@@ -33,6 +33,7 @@ class TorScraper:
     
     def scrape_sofascore(self):
         self.change_ip()  # Yeni IP al
+        time.sleep(10)  # Tor bootstrap için bekle
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
@@ -45,7 +46,7 @@ class TorScraper:
         url = 'https://www.sofascore.com/api/v1/sport/football/scheduled-events/2025-10-07'
         
         try:
-            response = requests.get(url, headers=headers, proxies=self.proxies, timeout=20)
+            response = requests.get(url, headers=headers, proxies=self.proxies, timeout=60)
             
             if response.status_code == 200:
                 data = response.json()
